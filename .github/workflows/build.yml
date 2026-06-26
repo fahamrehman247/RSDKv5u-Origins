@@ -25,7 +25,6 @@ jobs:
 
     - name: Run CMake Config and Force Enable Plus DLC
       run: |
-        # FIXED: Removed the aggressive "-A x64" argument and used structural fallback variable strings instead
         cmake -B build -S . `
           -DCMAKE_GENERATOR_PLATFORM=x64 `
           -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
@@ -64,12 +63,12 @@ jobs:
       run: |
         cd dependencies/android
         mkdir -p libogg libtheora
-        curl -L https://xiph.org | tar -xz -C libogg --strip-components=1
-        curl -L https://xiph.org | tar -xz -C libtheora --strip-components=1
+        # FIXED: Uses alternative, highly stable fallback server download strings
+        curl -L https://archive.org | tar -xz -C libogg --strip-components=1 || curl -L https://osuosl.org | tar -xz -C libogg --strip-components=1
+        curl -L https://archive.org | tar -xz -C libtheora --strip-components=1 || curl -L https://osuosl.org | tar -xz -C libtheora --strip-components=1
 
     - name: Inject Android Plus Flag Properties
       run: |
-        # FIXED: Uses an open search string that targets "DISABLE_PLUS" regardless of the word placement or quotes
         sed -i 's/DISABLE_PLUS ON/DISABLE_PLUS OFF/g' CMakeLists.txt || true
         sed -i 's/DISABLE_PLUS 1/DISABLE_PLUS 0/g' CMakeLists.txt || true
         sed -i 's/DISABLE_PLUS TRUE/DISABLE_PLUS FALSE/g' CMakeLists.txt || true
@@ -78,14 +77,14 @@ jobs:
       run: |
         cd dependencies/android/app/src/main/jni
         rm -rf RSDKv5 || true
-        ln -sf "../../../../../.. " "RSDKv5"
+        # FIXED: Removed trailing space from directory path link structure
+        ln -sf "../../../../../.." "RSDKv5"
 
     - name: Build Standalone Debug APK File via Gradle
       run: |
         cd dependencies/android
         chmod +x gradlew
         yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        # FIXED: Clears cache structures to force a complete code rebuild from scratch
         ./gradlew clean
         ./gradlew assembleDebug --no-daemon
 
