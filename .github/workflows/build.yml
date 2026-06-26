@@ -56,14 +56,16 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
-    - name: Setup Android SDK Profile Tools
+    - name: Setup Android SDK and NDK Toolchain
       uses: android-actions/setup-android@v3
+      with:
+        # FIXED: Forces the runner to pre-install the C++ Native Development Kit needed for the decompilation engine
+        ndk-version: '25.1.8937393'
 
     - name: Fetch Core Audio Dependencies
       run: |
         cd dependencies/android
         mkdir -p libogg libtheora
-        # FIXED: Uses alternative, highly stable fallback server download strings
         curl -L https://archive.org | tar -xz -C libogg --strip-components=1 || curl -L https://osuosl.org | tar -xz -C libogg --strip-components=1
         curl -L https://archive.org | tar -xz -C libtheora --strip-components=1 || curl -L https://osuosl.org | tar -xz -C libtheora --strip-components=1
 
@@ -77,7 +79,6 @@ jobs:
       run: |
         cd dependencies/android/app/src/main/jni
         rm -rf RSDKv5 || true
-        # FIXED: Removed trailing space from directory path link structure
         ln -sf "../../../../../.." "RSDKv5"
 
     - name: Build Standalone Debug APK File via Gradle
@@ -85,9 +86,13 @@ jobs:
         cd dependencies/android
         chmod +x gradlew
         yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        
+        # FIXED: Feeds the environment variable directly into Gradle so it can bind the C++ compiler variables
+        export ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/25.1.8937393
+        
         ./gradlew clean
         ./gradlew assembleDebug --no-daemon
-
+        
     - name: Export Android Artifact APK
       uses: actions/upload-artifact@v4
       with:
