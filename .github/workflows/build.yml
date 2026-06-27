@@ -17,14 +17,15 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install All Media Dependencies via Vcpkg
-      run: vcpkg install sdl2 glew glfw3 libogg libvorbis libtheora
+    - name: Install All Media Dependencies via Vcpkg (Static)
+      run: vcpkg install sdl2 glew glfw3 libogg libvorbis libtheora --triplet=x64-windows-static
 
     - name: Configure CMake
       run: |
-        cmake -B build -S dependencies/RSDKv5 -A x64 `
+        cmake -B build -A x64 `
           -DCMAKE_BUILD_TYPE=Release `
-          -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
 
     - name: Build Project
       run: cmake --build build --config Release
@@ -53,26 +54,26 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Install Android NDK
+    - name: Install Correct Android NDK (Legacy Project Match)
       run: |
-        sdkmanager --install "ndk;25.2.9519653"
+        sdkmanager --install "ndk;21.4.7075529"
 
     - name: Bind Local Environment Mapping
       run: |
         cd dependencies/android
         echo "sdk.dir=$ANDROID_HOME" > local.properties
-        echo "ndk.dir=$ANDROID_HOME/ndk/25.2.9519653" >> local.properties
+        echo "ndk.dir=$ANDROID_HOME/ndk/21.4.7075529" >> local.properties
 
     - name: Make Gradle Executable
       run: chmod +x dependencies/android/gradlew
       
-    - name: Build with Gradle (ARM Only)
+    - name: Build with Gradle (ARM Debug Variant)
       run: |
         cd dependencies/android
-        ./gradlew assembleRelease -Pandroid.injected.build.abi="armeabi-v7a,arm64-v8a" --no-daemon
+        ./gradlew assembleDebug -Pandroid.injected.build.abi="armeabi-v7a,arm64-v8a" --no-daemon
 
     - name: Upload Android ARM APKs
       uses: actions/upload-artifact@v4
       with:
         name: RSDKv5u-Origins-Android-ARM
-        path: dependencies/android/app/build/outputs/apk/release/
+        path: dependencies/android/app/build/outputs/apk/debug/
