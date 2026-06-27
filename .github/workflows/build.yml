@@ -1,4 +1,4 @@
-name: Build RSDKv5u-Origins
+name: Build RSDKv5u-Origins (Fixed Dependencies)
 
 on:
   push:
@@ -17,11 +17,17 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Install Windows Dependencies via Vcpkg
+      run: vcpkg install sdl2 glew glfw3
+
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+    - name: Configure CMake (Explicit Win64 + Vcpkg Toolchain)
+      run: |
+        cmake -B build -A x64 `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
     - name: Build Project
       run: cmake --build build --config Release
@@ -29,7 +35,7 @@ jobs:
     - name: Upload Windows Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: RSDKv5u-Origins-Windows
+        name: RSDKv5u-Origins-Windows-x64
         path: build/Release/
 
   build-android:
