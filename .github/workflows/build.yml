@@ -1,4 +1,4 @@
-name: Build RSDKv5u-Origins (Fixed Dependencies)
+name: Build RSDKv5u-Origins
 
 on:
   push:
@@ -17,22 +17,20 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install Windows Dependencies via Vcpkg
+    - name: Install Windows Multimedia Packages via Vcpkg
       run: vcpkg install sdl2 glew glfw3
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Configure CMake (Explicit Win64 + Vcpkg Toolchain)
+    - name: Configure CMake (Forced Dependencies)
       run: |
         cmake -B build -A x64 `
           -DCMAKE_BUILD_TYPE=Release `
+          -DRETRO_USING_SDL2=ON `
           -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
     - name: Build Project
-      run: cmake --build build --config Release
+      run: cmake --build build --config Release --parallel 4
 
-    - name: Upload Windows Artifacts
+    - name: Upload Windows x64 Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: RSDKv5u-Origins-Windows-x64
@@ -47,11 +45,11 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Set up JDK 17
+    - name: Set up JDK 11 (Legacy Compatibility)
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
-        java-version: '17'
+        java-version: '11'
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
@@ -60,13 +58,19 @@ jobs:
       run: |
         sdkmanager --install "ndk;25.2.9519653"
 
+    - name: Bind Local Environment Mapping
+      run: |
+        cd dependencies/android
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+        echo "ndk.dir=$ANDROID_HOME/ndk/25.2.9519653" >> local.properties
+
     - name: Make Gradle Executable
       run: chmod +x dependencies/android/gradlew
       
     - name: Build with Gradle (ARM Only)
       run: |
         cd dependencies/android
-        ./gradlew assembleRelease -Pandroid.injected.build.abi="armeabi-v7a,arm64-v8a"
+        ./gradlew assembleRelease -Pandroid.injected.build.abi="armeabi-v7a,arm64-v8a" --no-daemon
 
     - name: Upload Android ARM APKs
       uses: actions/upload-artifact@v4
