@@ -1,7 +1,6 @@
 name: Universal Autobuild
 
-on:
-  workflow_dispatch: # Allows you to trigger the build manually with one click
+on: push
 
 jobs:
   build-windows:
