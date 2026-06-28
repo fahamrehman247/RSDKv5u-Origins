@@ -1,4 +1,4 @@
-name: Universal Plus Autobuild
+name: Windows Unsigned Autobuild
 
 on: push
 
@@ -13,8 +13,9 @@ jobs:
           ref: master
           submodules: recursive
 
-      - name: Install vcpkg Dependencies
+      - name: Install vcpkg to External Path
         run: |
+          cd C:\
           git clone https://github.com
           cd vcpkg
           .\bootstrap-vcpkg.bat
@@ -22,7 +23,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_MANIFEST_MODE=OFF -DRETRO_DISABLE_PLUS=OFF
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_MANIFEST_MODE=OFF -DRETRO_DISABLE_PLUS=OFF
 
       - name: Build Executable
         run: |
@@ -33,32 +34,3 @@ jobs:
         with:
           name: Sonic-Origins-Win64-Plus
           path: build/Release/RSDKv5u.exe
-
-  build-android:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          ref: master
-          submodules: recursive
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Build Android App (Plus Features Forced On)
-        run: |
-          cd android
-          chmod +x gradlew
-          # -PRETRO_DISABLE_PLUS=OFF injects the flag straight into Gradle's project properties
-          ./gradlew assembleRelease -PRETRO_DISABLE_PLUS=OFF
-
-      - name: Upload Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Sonic-Origins-Android-Plus
-          path: android/app/build/outputs/apk/release/*.apk
