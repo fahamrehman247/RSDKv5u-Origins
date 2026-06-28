@@ -12,9 +12,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install vcpkg Dependencies
+        run: |
+          git clone https://github.com
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg install glew sdl2 libogg libtheora libvorbis --triplet=x64-windows-static
+
       - name: Configure CMake
         run: |
-          cmake -B build -S . -DRETRO_DISABLE_PLUS=OFF
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DRETRO_DISABLE_PLUS=OFF
 
       - name: Build Executable
         run: |
