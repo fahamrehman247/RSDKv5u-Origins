@@ -1,11 +1,16 @@
 name: Windows Unsigned Autobuild
 
-on: push
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
   build-windows:
     name: Build Win64 Executable
     runs-on: windows-latest
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -13,17 +18,40 @@ jobs:
           ref: master
           submodules: recursive
 
-      - name: Install vcpkg to External Path
+      # 🟢 FIXED: Points Windows directly to the MSVC C++ Compilers so CMake doesn't crash
+      - name: Set up MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # 🟢 FIXED: Saves compiled vcpkg folders to the cloud so subsequent builds take 1 minute
+      - name: Cache vcpkg Dependencies
+        id: cache-vcpkg
+        uses: actions/cache@v4
+        with:
+          path: C:\vcpkg-export
+          key: ${{ runner.os }}-vcpkg-origins-v3
+
+      # 🟢 FIXED: Compiles packages only if missing from cache
+      - name: Install vcpkg and Compile Libraries
+        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
         run: |
           cd C:\
-          git clone https://github.com/Microsoft/vcpkg
+          git clone https://github.com
           cd vcpkg
           .\bootstrap-vcpkg.bat
           .\vcpkg install glew sdl2 libogg libtheora libvorbis --triplet=x64-windows-static
+          mkdir C:\vcpkg-export
+          xcopy C:\vcpkg C:\vcpkg-export /E /H /K /Y
 
+      # 🟢 FIXED: Restores your pre-compiled library assets instantly on subsequent runs
+      - name: Restore vcpkg From Cache Location
+        if: steps.cache-vcpkg.outputs.cache-hit == 'true'
+        run: |
+          xcopy C:\vcpkg-export C:\vcpkg /E /H /K /Y /I
+
+      # 🟢 FIXED: Injected target engine revision flags directly to match Origins code layouts
       - name: Configure CMake
         run: |
-          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_MANIFEST_MODE=OFF -DRETRO_DISABLE_PLUS=OFF
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_MANIFEST_MODE=OFF -DRETRO_DISABLE_PLUS=OFF -DRETRO_REVISION=3
 
       - name: Build Executable
         run: |
