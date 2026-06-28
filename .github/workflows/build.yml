@@ -1,4 +1,4 @@
-name: Universal Autobuild
+name: Windows Unsigned Autobuild
 
 on: push
 
@@ -12,16 +12,19 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup vcpkg
+      - name: Setup vcpkg and Dependencies
         run: |
           git clone https://github.com
           cd vcpkg
           .\bootstrap-vcpkg.bat
           .\vcpkg install glew sdl2 libogg libtheora libvorbis --triplet=x64-windows-static
 
-      - name: Configure and Build
+      - name: Configure CMake
         run: |
-          cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DRETRO_DISABLE_PLUS=OFF
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static -DRETRO_DISABLE_PLUS=OFF
+
+      - name: Build Executable
+        run: |
           cmake --build build --config Release
 
       - name: Upload Windows Artifact
@@ -29,30 +32,3 @@ jobs:
         with:
           name: Sonic-Origins-Win64-Plus
           path: build/Release/RSDKv5u.exe
-
-  build-android:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Build Android App
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease
-
-      - name: Upload Android APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Sonic-Origins-Android
-          path: android/app/build/outputs/apk/release/*.apk
