@@ -23,6 +23,7 @@ jobs:
         with:
           msystem: MINGW64
           update: true
+          cache: true
           install: >-
             pkg-config 
             make 
