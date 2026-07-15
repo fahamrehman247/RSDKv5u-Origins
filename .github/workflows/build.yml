@@ -33,13 +33,6 @@ jobs:
             mingw-w64-x86_64-libogg 
             mingw-w64-x86_64-libtheora
 
-      # Downloads the official Steam API headers to satisfy #include "steam_api.h"
-      - name: Fetch Steamworks SDK Headers
-        run: |
-          mkdir -p steam_sdk
-          curl -sSL "https://githubusercontent.com" -o steam_sdk/steam_api.h
-          curl -sSL "https://githubusercontent.com" -o steam_sdk/steam_types.h
-
       - name: Build RSDKv5 + U
         run: |
           export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig"
