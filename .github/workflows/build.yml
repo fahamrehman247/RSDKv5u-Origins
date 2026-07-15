@@ -7,11 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  v5-windows-x64:
-    runs-on: windows-2022
-    defaults:
-      run:
-        shell: msys2 {0}
+  v5-windows-gcc-x64:
+    runs-on: windows-latest
+
     steps:
       - name: Checkout 
         uses: actions/checkout@v4
@@ -29,31 +27,23 @@ jobs:
             make 
             git 
             mingw-w64-x86_64-gcc 
+            mingw-w64-x86_64-cmake
             mingw-w64-x86_64-SDL2 
             mingw-w64-x86_64-libogg 
             mingw-w64-x86_64-libtheora
-      - name: Map Dependency Target Directories
-        run: |
-          cp -r dependencies/all/steam_sdk dependencies/all/steam
 
-      - name: Build RSDKv5 + U
+      # 1. RUN COMPILATION INSIDE MSYS2 (Required for MinGW tools to see paths)
+      - name: Configure and Build Engine
+        shell: msys2 {0}
         run: |
-          export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig"
-          
-          # Force the compiler to look inside our new steam_sdk folder for headers
-          export CFLAGS="-I../../steam_sdk"
-          export CXXFLAGS="-I../../steam_sdk"
-          
-          # Compiles with Steam features fully active
-          make RSDK_ONLY=1 RSDK_REVISION=3
+          cmake -B build -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
 
-      - name: Move artifacts
-        run: |
-          mkdir -p artifacts
-          cp ./bin/Windows/DX9/*.exe ./artifacts/ || true
-
-      - name: Upload artifacts
+      # 2. UPLOAD ARTIFACT: Grabs your finished executable and creates a zip on GitHub
+      - name: Upload Compiled RSDKv5 Binary
         uses: actions/upload-artifact@v4
         with:
-          name: v5-windows-x64
-          path: artifacts
+          name: RSDKv5u-Origins-MinGW64  # The download name on your Actions tab
+          path: |
+            build/*.exe
+            build/*.dll
