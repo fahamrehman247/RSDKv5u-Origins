@@ -351,7 +351,7 @@ extern "C" __declspec(dllexport) void Init(ModInfo *modInfo)
     ModLoaderData = modInfo->ModLoader;
 }
 
-HMODULE DllHandle = NULL
+HMODULE DllHandle = NULL;
 
 #if RETRO_RENDERDEVICE_DIRECTX9 || RETRO_RENDERDEVICE_DIRECTX11
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
