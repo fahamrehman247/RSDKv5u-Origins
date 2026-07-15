@@ -28,6 +28,18 @@ jobs:
             mingw-w64-x86_64-libogg 
             mingw-w64-x86_64-libtheora
 
+      - name: Patch Codebase Compilation Errors
+        run: |
+          # 1. Fix conflicting type definitions for LONG_PTR and ULONG_PTR
+          sed -i 's/typedef LONG LONG_PTR;/\/\/ patched/g' ./RSDKv5/detours.h
+          sed -i 's/typedef ULONG ULONG_PTR;/\/\/ patched/g' ./RSDKv5/detours.h
+          
+          # 2. Fix undeclared 'DllHandle' scope variable in main.cpp
+          sed -i '/BOOL APIENTRY DllMain/i HMODULE DllHandle = NULL;' ./RSDKv5/main.cpp
+          
+          # 3. Fix invalid conversion from function pointer to PVOID in Hooks
+          sed -i 's/implOf##functionName/(PVOID)implOf##functionName/g' ./RSDKv5/Helpers.h
+
       - name: Build RSDKv5 + U
         run: |
           make -j8 RSDK_ONLY=1 AUTOBUILD=1
