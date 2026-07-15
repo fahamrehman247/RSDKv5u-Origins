@@ -24,7 +24,7 @@ static size_t PROCESS_ENTRY = (size_t)DetourGetEntryPoint((HMODULE)BASE_ADDRESS)
 	{ \
 		DetourTransactionBegin(); \
 		DetourUpdateThread(GetCurrentThread()); \
-		DetourAttach((void**)&original##functionName, implOf##functionName); \
+		DetourAttach((void**)&original##functionName, (PVOID)implOf##functionName); \
 		DetourTransactionCommit(); \
 	}
 
