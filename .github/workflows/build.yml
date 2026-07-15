@@ -44,7 +44,7 @@ jobs:
         run: |
           make -j8 RSDK_ONLY=1 AUTOBUILD=1
           make clean
-          make -j8 RSDK_ONLY=1 RSDK_REVISION=3 AUTOBUILD=1
+          make -j8 RSDK_ONLY=1 RSDK_REVISION=3 
 
       - name: Move artifacts
         run: |
