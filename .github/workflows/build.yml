@@ -32,6 +32,9 @@ jobs:
             mingw-w64-x86_64-SDL2 
             mingw-w64-x86_64-libogg 
             mingw-w64-x86_64-libtheora
+      - name: Map Dependency Target Directories
+        run: |
+          cp -r dependencies/all/steam_sdk dependencies/all/steam
 
       - name: Build RSDKv5 + U
         run: |
