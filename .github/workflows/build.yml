@@ -1,6 +1,10 @@
 name: Build RSDKv5
 
-on: workflow_dispatch
+on:
+  push:
+    paths:
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
 
 jobs:
   v5-windows-x64:
@@ -33,12 +37,7 @@ jobs:
         run: |
           export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig"
           
-          export CFLAGS="-DDllHandle=NULL"
-          export CXXFLAGS="-DDllHandle=NULL"
-          
-          make -j8 RSDK_ONLY=1 AUTOBUILD=1
-          make clean
-          make -j8 RSDK_ONLY=1 RSDK_REVISION=3 
+          make RSDK_ONLY=1 RSDK_REVISION=3 
 
       - name: Move artifacts
         run: |
