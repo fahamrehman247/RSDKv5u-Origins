@@ -33,12 +33,23 @@ jobs:
             mingw-w64-x86_64-libogg 
             mingw-w64-x86_64-libtheora
 
-      # We inject the missing DllHandle definition via CFLAGS/CXXFLAGS
+      # Downloads the official Steam API headers to satisfy #include "steam_api.h"
+      - name: Fetch Steamworks SDK Headers
+        run: |
+          mkdir -p steam_sdk
+          curl -sSL "https://githubusercontent.com" -o steam_sdk/steam_api.h
+          curl -sSL "https://githubusercontent.com" -o steam_sdk/steam_types.h
+
       - name: Build RSDKv5 + U
         run: |
           export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig"
           
-          make RSDK_ONLY=1 RSDK_REVISION=3 
+          # Force the compiler to look inside our new steam_sdk folder for headers
+          export CFLAGS="-I../../steam_sdk"
+          export CXXFLAGS="-I../../steam_sdk"
+          
+          # Compiles with Steam features fully active
+          make RSDK_ONLY=1 RSDK_REVISION=3
 
       - name: Move artifacts
         run: |
