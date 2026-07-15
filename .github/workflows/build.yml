@@ -8,6 +8,8 @@ on: workflow_dispatch
 #     branches:
 #       - master
 
+# TODO: readd with: submodules: recursive once we can
+
 jobs:
   v5-windows-x64:
     runs-on: windows-2022
@@ -16,29 +18,26 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Checkout 
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
         with:
           submodules: recursive
-
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           update: true
           install: pkg-config make git mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2 mingw-w64-x86_64-libogg mingw-w64-x86_64-libtheora
-
-      # Only building the RSDK_REVISION=3 target with plus features enabled
       - name: Build RSDKv5 + U
         run: |
-          make RSDK_ONLY=1 RSDK_REVISION=3 RETRO_DISABLE_PLUS=OFF
-
+          make -j8 RSDK_ONLY=1 AUTOBUILD=1
+          make -j8 clean-rsdk
+          make -j8 RSDK_ONLY=1 RSDK_REVISION=3 AUTOBUILD=1
       - name: Move artifacts
         run: |
-          mkdir -p artifacts
-          mv ./bin/Windows/DX9/*.exe ./artifacts/
-
+          mkdir artifacts
+          mv ./bin/Windows/DX9/*.exe ./artifacts
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v1.0.0
         with:
           name: v5-windows-x64
-          path: artifacts/
+          path: artifacts
