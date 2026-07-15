@@ -1,15 +1,19 @@
 name: Build RSDKv5
 
-on:
-  push:
-    paths:
-      - '.github/workflows/build.yml'
-  workflow_dispatch:
+on: workflow_dispatch
+
+# each artifact is like 15MB so we'll start by only doing it manually
+# on:
+#   push:
+#     branches:
+#       - master
 
 jobs:
-  v5-windows-gcc-x64:
-    runs-on: windows-latest
-
+  v5-windows-x64:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - name: Checkout 
         uses: actions/checkout@v4
@@ -21,29 +25,20 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          cache: true
-          install: >-
-            pkg-config 
-            make 
-            git 
-            mingw-w64-x86_64-gcc 
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-SDL2 
-            mingw-w64-x86_64-libogg 
-            mingw-w64-x86_64-libtheora
+          install: pkg-config make git mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2 mingw-w64-x86_64-libogg mingw-w64-x86_64-libtheora
 
-      # 1. RUN COMPILATION INSIDE MSYS2 (Required for MinGW tools to see paths)
-      - name: Configure and Build Engine
-        shell: msys2 {0}
+      # Only building the RSDK_REVISION=3 target with plus features enabled
+      - name: Build RSDKv5 + U
         run: |
-          cmake -B build -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cmake --build build
+          make RSDK_ONLY=1 RSDK_REVISION=3 RETRO_DISABLE_PLUS=OFF
 
-      # 2. UPLOAD ARTIFACT: Grabs your finished executable and creates a zip on GitHub
-      - name: Upload Compiled RSDKv5 Binary
+      - name: Move artifacts
+        run: |
+          mkdir -p artifacts
+          mv ./bin/Windows/DX9/*.exe ./artifacts/
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: RSDKv5u-Origins-MinGW64  # The download name on your Actions tab
-          path: |
-            build/*.exe
-            build/*.dll
+          name: v5-windows-x64
+          path: artifacts/
